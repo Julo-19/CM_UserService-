@@ -10,6 +10,9 @@ use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Forms\Components\TextInput;
+use Filament\Tables\Actions\Action;
+use Filament\Notifications\Notification;
+use Src\Application\UseCases\ApproveStudentUseCase;
 
 class StudentProfileResource extends Resource
 {
@@ -54,33 +57,28 @@ class StudentProfileResource extends Resource
                     ]),
             ])
             ->actions([
-                Tables\Actions\Action::make('approve')
-                    ->label('Approuver')
-                    ->color('success')
-                    ->icon('heroicon-o-check')
-                    ->visible(fn ($record) => $record->status === 'PENDING')
-                    ->action(function ($record) {
-                        app(\Src\Application\UseCases\ApproveStudentUseCase::class)
-                            ->execute($record->user_id);
-
-                        $record->update(['status' => 'APPROVED']);
-                    }),
-            ])
-
-            ->actions([
                 Action::make('approve')
                     ->label('Approuver')
                     ->icon('heroicon-o-check')
                     ->color('success')
-                    ->visible(fn ($record) => $record->status === 'PENDING')
                     ->requiresConfirmation()
+                    ->visible(fn ($record) => $record->status === 'PENDING')
                     ->action(function ($record) {
+                        // Appel du UseCase (Clean Architecture)
                         app(ApproveStudentUseCase::class)
                             ->execute($record->user_id);
+
+                        // 🔑 Rafraîchit le record pour Livewire/Alpine
+                        $record->refresh();
+
+                        // Optionnel : notification pour confirmer l’action à l’admin
+                        Notification::make()
+                            ->title('Étudiant approuvé')
+                            ->success()
+                            ->send();
                     }),
             ])
-            
-            ->bulkActions([]); 
+            ->bulkActions([]);
     }
 
     public static function getPages(): array
@@ -89,5 +87,4 @@ class StudentProfileResource extends Resource
             'index' => Pages\ListStudentProfiles::route('/'),
         ];
     }
-    
 }

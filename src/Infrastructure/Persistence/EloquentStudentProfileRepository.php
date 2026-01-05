@@ -45,4 +45,10 @@ class EloquentStudentProfileRepository implements StudentProfileRepositoryInterf
             dateNaissance: $model->date_naissance
         );
     }
+
+    public function updateStatus(int $userId, string $status): void
+    {
+        StudentProfileModel::where('user_id', $userId)
+            ->update(['status' => $status]);
+    }
 }

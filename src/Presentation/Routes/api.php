@@ -8,3 +8,17 @@ Route::post('/admin/students/{userId}/approve', [StudentAdminController::class, 
 
 Route::post('/students/profile', [StudentProfileController::class, 'store']);
 
+Route::post('/admin/users/{userId}/approve', function($userId) {
+    $user = \Src\Infrastructure\Models\UserModel::find($userId);
+    if (!$user) {
+        return response()->json(['message'=>'Utilisateur introuvable'], 404);
+    }
+
+    $user->status = 'APPROVED';
+    $user->save();
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Utilisateur approuvé'
+    ]);
+});
